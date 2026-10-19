@@ -1,12 +1,31 @@
-﻿# CMakeList.txt: Cpp-Build-Validation-Lab 的 CMake 專案，在此包含來源及定義
-# 專案專屬邏輯。
-#
+﻿cmake_minimum_required(VERSION 3.20)
 
-# 將來源新增到此專案的可執行檔。
-add_executable (Cpp-Build-Validation-Lab "Cpp-Build-Validation-Lab.cpp" "Cpp-Build-Validation-Lab.h")
+project(CppBuildValidationLab LANGUAGES CXX)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET Cpp-Build-Validation-Lab PROPERTY CXX_STANDARD 20)
-endif()
+add_library(checksum STATIC
+    src/Checksum.cpp
+)
 
-# TODO: 新增測試，並視需要安裝目標。
+target_include_directories(checksum
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_features(checksum
+    PUBLIC cxx_std_20
+)
+
+add_executable(checksum_tests
+    tests/test_checksum.cpp
+)
+
+target_link_libraries(checksum_tests
+    PRIVATE checksum
+)
+
+enable_testing()
+
+add_test(
+    NAME checksum_tests
+    COMMAND checksum_tests
+)
