@@ -1,15 +1,31 @@
-﻿# CMakeList.txt: 最上層的 CMake 專案檔，執行全域設定
-# 並在這裡包含子專案。
-#
-cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required(VERSION 3.20)
 
-# 如果支援，則為 MSVC 編譯器啟用熱重新載入。
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
+project(CppBuildValidationLab LANGUAGES CXX)
 
-project ("Cpp-Build-Validation-Lab")
+add_library(checksum STATIC
+    Cpp-Build-Validation-Lab/src/Checksum.cpp
+)
 
-# 包含子專案。
-add_subdirectory ("Cpp-Build-Validation-Lab")
+target_include_directories(checksum
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/Cpp-Build-Validation-Lab/include
+)
+
+target_compile_features(checksum
+    PUBLIC cxx_std_20
+)
+
+add_executable(checksum_tests
+    Cpp-Build-Validation-Lab/tests/test_checksum.cpp
+)
+
+target_link_libraries(checksum_tests
+    PRIVATE checksum
+)
+
+enable_testing()
+
+add_test(
+    NAME checksum_tests
+    COMMAND checksum_tests
+)
