@@ -256,5 +256,63 @@ class TestBuildValidation(unittest.TestCase):
                 ["Configure", "Build", "Test"]
             )
 
+    def test_run_command_file_not_found(self):
+        command = ["missing-cmake", "--version"]
+
+        with patch(
+            "validate.subprocess.run",
+            side_effect=FileNotFoundError("Executable not found")
+        ) as mock_run:
+
+            result = validate.run_command(
+                "Configure",
+                command
+            )
+
+        self.assertFalse(result["success"])
+        self.assertIsNone(result["returncode"])
+        self.assertEqual(result["error_type"], "FileNotFoundError")
+        self.assertIn("Executable not found", result["stderr"])
+
+        mock_run.assert_called_once()
+
+
+    def test_run_command_permission_error(self):
+        command = ["cmake", "--version"]
+
+        with patch(
+            "validate.subprocess.run",
+            side_effect=PermissionError("Permission denied")
+        ) as mock_run:
+
+            result = validate.run_command(
+                "Configure",
+                command
+            )
+
+        self.assertFalse(result["success"])
+        self.assertIsNone(result["returncode"])
+        self.assertEqual(result["error_type"], "PermissionError")
+        self.assertIn("Permission denied", result["stderr"])
+
+        mock_run.assert_called_once()
+
+    def test_ctest_command_options(self):
+        with patch("validate.run_command") as mock_run:
+            validate.test_project("Debug")
+
+        mock_run.assert_called_once()
+
+        args, kwargs = mock_run.call_args
+
+        command = args[1]
+
+        self.assertIn("--no-tests=error", command)
+        self.assertIn("--output-on-failure", command)
+        self.assertIn("-C", command)
+
+        config_index = command.index("-C")
+        self.assertEqual(command[config_index + 1], "Debug")
+
 if __name__ == "__main__":
     unittest.main()

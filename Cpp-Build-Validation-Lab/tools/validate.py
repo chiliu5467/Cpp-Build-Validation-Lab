@@ -15,15 +15,29 @@ logging.basicConfig(
 def run_command(name, command):
     logging.info("Starting %s", name)
     start = time.perf_counter()
+    try:
+        result = subprocess.run(
+            command,
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=False
+        )
 
-    result = subprocess.run(
-        command,
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False
-    )
-
+    except OSError as error:
+        duration = time.perf_counter() - start
+        logging.error("%s could not start: %s", name, error)
+        return {
+            "name": name,
+            "command": command,
+            "success": False,
+            "returncode": None,
+            "duration_seconds": duration,
+            "stdout": "",
+            "stderr": str(error),
+            "error_type": type(error).__name__
+        }
+    
     duration = time.perf_counter() - start
 
     if result.returncode == 0:
@@ -75,7 +89,8 @@ def build_project(config):
         "--build",
         build_dir,
         "--config",
-        config
+        config,
+        "--parallel 2"
     ]
 
     return run_command("Build", command)
@@ -89,10 +104,11 @@ def test_project(config):
         build_dir,
         "-C",
         config,
-        "--output-on-failure"
+        "--output-on-failure",
+        "--no-tests=error"
     ]
 
-    return run_command("Test Project", command)
+    return run_command("Test", command)
 
 def save_report(config, steps):
     reports_dir = PROJECT_ROOT / "reports"
