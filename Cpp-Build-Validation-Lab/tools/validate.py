@@ -90,7 +90,8 @@ def build_project(config):
         build_dir,
         "--config",
         config,
-        "--parallel 2"
+        "--parallel",
+        "2"
     ]
 
     return run_command("Build", command)
